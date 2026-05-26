@@ -202,7 +202,7 @@ def get_saju_interpretation(saju, mbti, enneagram, attachment, concern, card_nam
     headers = {"Content-Type": "application/json"}
     data = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"maxOutputTokens": 1000}
+        "generationConfig": {"maxOutputTokens": 8192}
     }
     res = requests.post(url, headers=headers, json=data, timeout=30)
     result = res.json()
