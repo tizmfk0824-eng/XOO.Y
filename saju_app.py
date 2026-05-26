@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import date, datetime
-import anthropic
 import requests
+import json
 
 # 페이지 설정
 st.set_page_config(
@@ -167,8 +167,7 @@ def get_concern_desc(concern):
     }
     return desc.get(concern, "전반적인 운세")
 
-def get_saju_interpretation(saju, mbti, enneagram, attachment, concern, card_name):
-    client = anthropic.Anthropic()
+def get_saju_interpretation(saju, mbti, enneagram, attachment, concern, card_name, api_key):
     mbti_style = get_mbti_style(mbti)
     ennea_desc = get_enneagram_desc(enneagram)
     concern_desc = get_concern_desc(concern)
@@ -198,12 +197,16 @@ def get_saju_interpretation(saju, mbti, enneagram, attachment, concern, card_nam
 
 친근하고 공감가는 말투로, 너무 어렵지 않게 써주세요.
 이모지를 적절히 활용해주세요."""
-    message = client.messages.create(
-        model="claude-sonnet-4-20250514",
-        max_tokens=1000,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    return message.content[0].text
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"maxOutputTokens": 1000}
+    }
+    res = requests.post(url, headers=headers, json=data, timeout=30)
+    result = res.json()
+    return result["candidates"][0]["content"]["parts"][0]["text"]
 
 # ===== UI 시작 =====
 
@@ -462,7 +465,7 @@ concern = st.radio(
 st.markdown("---")
 
 # API 키
-api_key = st.text_input("Anthropic API Key", type="password", placeholder="sk-ant-...")
+api_key = st.text_input("Google Gemini API Key", type="password", placeholder="AIza...")
 st.caption("API 키는 저장되지 않으며 결과 생성 후 즉시 사라집니다.")
 
 # 결과 생성
@@ -472,8 +475,6 @@ if st.button("🔮 사주 해석 보기", use_container_width=True, type="primar
     elif not card_name:
         st.error("카드를 먼저 선택해주세요 🃏")
     else:
-        import os
-        os.environ["ANTHROPIC_API_KEY"] = api_key
         with st.spinner("사주를 분석하고 있어요... 🔮"):
             try:
                 saju = calc_saju(
@@ -491,7 +492,7 @@ if st.button("🔮 사주 해석 보기", use_container_width=True, type="primar
 
                 st.markdown('<div class="section-title">🔮 맞춤 해석</div>', unsafe_allow_html=True)
                 result = get_saju_interpretation(
-                    saju, mbti, enneagram, attachment, concern, card_name
+                    saju, mbti, enneagram, attachment, concern, card_name, api_key
                 )
                 st.markdown(f'<div class="result-box">{result}</div>', unsafe_allow_html=True)
                 st.markdown("""
