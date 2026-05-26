@@ -198,7 +198,7 @@ def get_saju_interpretation(saju, mbti, enneagram, attachment, concern, card_nam
 친근하고 공감가는 말투로, 너무 어렵지 않게 써주세요.
 이모지를 적절히 활용해주세요."""
 
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent?key={api_key}"
     headers = {"Content-Type": "application/json"}
     data = {
         "contents": [{"parts": [{"text": prompt}]}],
