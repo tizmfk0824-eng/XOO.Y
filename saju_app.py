@@ -5,7 +5,7 @@ import json
 import time
 
 st.set_page_config(
-    page_title="수연이의 사주풀이방",
+    page_title="수연이의 사주",
     page_icon="🔮",
     layout="wide"
 )
@@ -373,42 +373,145 @@ elif st.session_state.page == 3:
 
 # ===== 4페이지: 오늘의 카드 =====
 elif st.session_state.page == 4:
-    st.markdown('<div class="section-title">🃏 오늘의 카드</div>', unsafe_allow_html=True)
-    st.markdown('<p style="color:rgba(255,255,255,0.8);">마음이 끌리는 카드를 하나 선택하세요</p>', unsafe_allow_html=True)
+    st.markdown('<div class="section-title">🃏 오늘의 타로 카드</div>', unsafe_allow_html=True)
+    st.markdown('<p style="color:rgba(255,255,255,0.8); text-align:center;">마음이 끌리는 카드를 클릭하세요 ✨</p>', unsafe_allow_html=True)
 
     if st.session_state.selected_card is None:
-        # 카드 착착착 애니메이션
-        cards_html = '<div class="cards-container">'
-        for i, card in enumerate(CARDS):
-            delay = i * 0.1
-            cards_html += f'''
-            <div class="card-wrapper" onclick="selectCard({i})">
-                <div class="card-inner" id="card-{i}" style="--delay: {delay}s">
-                    <div class="card-front">🔮</div>
-                    <div class="card-back">
-                        <div class="emoji">{card[1]}</div>
-                        <div class="name">{card[0]}</div>
-                    </div>
-                </div>
-            </div>'''
-        cards_html += '</div>'
+        import streamlit.components.v1 as components
 
-        # 카드 선택 버튼 (5열)
-        cols = st.columns(5)
-        for i, card in enumerate(CARDS):
-            with cols[i % 5]:
-                if st.button(f"{card[1]}\n{card[0]}", key=f"c{i}", use_container_width=True):
-                    st.session_state.selected_card = i
-                    st.rerun()
+        card_html = """<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { margin:0; padding:10px; background:transparent; }
+.tarot-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    padding: 10px 0;
+}
+.tarot-card {
+    width: 85px;
+    height: 145px;
+    perspective: 1000px;
+    cursor: pointer;
+}
+.tarot-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    background: linear-gradient(160deg, #0d0221, #3b0764, #6b21a8);
+    border: 2px solid rgba(200,170,255,0.4);
+    box-shadow: 0 0 12px rgba(139,92,246,0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    animation: cardAppear 0.4s ease forwards, cardSway 4s ease-in-out infinite;
+    animation-delay: var(--d), calc(var(--d) + 0.4s);
+    opacity: 0;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    position: relative;
+}
+.tarot-card:hover .tarot-inner {
+    border-color: gold;
+    box-shadow: 0 0 25px rgba(234,179,8,0.6);
+    transform: translateY(-8px) scale(1.05);
+    animation-play-state: paused;
+}
+@keyframes cardAppear {
+    0%   { opacity:0; transform: rotateY(-90deg) scale(0.8); }
+    100% { opacity:1; transform: rotateY(0deg) scale(1); }
+}
+@keyframes cardSway {
+    0%,100% { transform: rotate(-2deg) translateY(0px); }
+    50%      { transform: rotate(2deg) translateY(-6px); }
+}
+.card-symbol { font-size: 2em; filter: drop-shadow(0 0 8px rgba(200,170,255,0.8)); }
+.card-stars  { font-size: 0.5em; letter-spacing: 2px; opacity: 0.6; margin-top: 5px; }
+.card-border {
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(200,170,255,0.15);
+    border-radius: 8px;
+    pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div class="tarot-container" id="cards">
+"""
+        for i in range(len(CARDS)):
+            delay = i * 0.07
+            card_html += f'''<div class="tarot-card" onclick="pick({i})">
+  <div class="tarot-inner" style="--d:{delay}s">
+    <div class="card-border"></div>
+    <div class="card-symbol">🔮</div>
+    <div class="card-stars">✦ ✦ ✦</div>
+  </div>
+</div>'''
+
+        card_html += """
+</div>
+<script>
+function pick(idx) {
+    const data = JSON.stringify({selected: idx});
+    window.parent.postMessage({
+        type: "streamlit:setComponentValue",
+        value: idx
+    }, "*");
+
+    // Streamlit 1.x 방식
+    const event = new CustomEvent("streamlit:setComponentValue", {detail: idx});
+    window.parent.document.dispatchEvent(event);
+}
+</script>
+</body></html>"""
+
+        result = components.html(card_html, height=520)
+
+        if result is not None:
+            st.session_state.selected_card = int(result)
+            st.rerun()
+
+        # 폴백: 카드가 클릭 안될 경우 번호 선택
+        with st.expander("카드 클릭이 안 되면 여기서 선택하세요"):
+            cols = st.columns(5)
+            for i in range(len(CARDS)):
+                with cols[i % 5]:
+                    if st.button(f"🔮 {i+1}", key=f"fb{i}", use_container_width=True):
+                        st.session_state.selected_card = i
+                        st.rerun()
+
     else:
-        # 선택된 카드 결과
         card = CARDS[st.session_state.selected_card]
         st.markdown(f"""
-<div class="selected-card-result">
-    <div style="font-size:0.85em; opacity:0.8; margin-bottom:10px;">오늘의 카드</div>
-    <div style="font-size:4em; margin-bottom:10px;">{card[1]}</div>
-    <div style="font-size:1.8em; font-weight:bold; margin-bottom:15px; color:gold;">{card[0]}</div>
-    <div style="font-size:1em; line-height:1.7; opacity:0.95;">{card[2]}</div>
+<style>
+@keyframes flipReveal {{
+    0%   {{ transform: rotateY(-90deg) scale(0.8); opacity:0; }}
+    100% {{ transform: rotateY(0deg) scale(1); opacity:1; }}
+}}
+.revealed-card {{
+    animation: flipReveal 0.7s ease forwards;
+    background: linear-gradient(160deg, #1a0533, #6b21a8, #9333ea);
+    border: 3px solid gold;
+    border-radius: 20px;
+    padding: 35px 25px;
+    text-align: center;
+    color: white;
+    max-width: 320px;
+    margin: 20px auto;
+    box-shadow: 0 0 40px rgba(234,179,8,0.3), 0 0 80px rgba(139,92,246,0.2);
+}}
+</style>
+<div class="revealed-card">
+    <div style="font-size:0.8em; opacity:0.7; letter-spacing:3px; margin-bottom:15px;">✦ 오늘의 카드 ✦</div>
+    <div style="font-size:5em; margin-bottom:15px; filter:drop-shadow(0 0 15px rgba(234,179,8,0.6));">{card[1]}</div>
+    <div style="font-size:1.6em; font-weight:bold; margin-bottom:20px; color:gold; text-shadow:0 0 10px rgba(234,179,8,0.5);">{card[0]}</div>
+    <div style="width:60px; height:2px; background:linear-gradient(to right, transparent, gold, transparent); margin:0 auto 20px;"></div>
+    <div style="font-size:0.95em; line-height:1.8; opacity:0.95;">{card[2]}</div>
 </div>
 """, unsafe_allow_html=True)
 
