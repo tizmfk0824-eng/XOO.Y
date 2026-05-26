@@ -206,6 +206,12 @@ def get_saju_interpretation(saju, mbti, enneagram, attachment, concern, card_nam
     }
     res = requests.post(url, headers=headers, json=data, timeout=30)
     result = res.json()
+
+    # 오류 처리
+    if "error" in result:
+        raise Exception(f"API 오류: {result['error']['message']}")
+    if "candidates" not in result:
+        raise Exception(f"응답 오류: {result}")
     return result["candidates"][0]["content"]["parts"][0]["text"]
 
 # ===== UI 시작 =====
