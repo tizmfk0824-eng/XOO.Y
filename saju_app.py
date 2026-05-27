@@ -240,7 +240,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # 타이틀
-st.markdown('<div class="main-title">🔮 오늘의 사주</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-title">🔮 수연이의 사주</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">사주 × MBTI × 에니어그램 맞춤 해석</div>', unsafe_allow_html=True)
 st.markdown(f'<div class="weather-bar">{weather_emoji} {time_name} · {now.strftime("%Y년 %m월 %d일")} · {temp_str}</div>', unsafe_allow_html=True)
 
